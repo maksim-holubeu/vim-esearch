@@ -101,21 +101,22 @@ fu! esearch#buf#rename_qf(name) abort
   let w:quickfix_title = a:name
 endfu
 
-fu! s:bufdo(bufnr, cmd, bang) abort
-  let cur_buffer = esearch#buf#stay()
-  try
-    exe a:bufnr 'bufdo' a:cmd.(a:bang ? '!' : '') |
-    return 1
-  catch   | call esearch#util#warn(v:exception) | return 0
-  finally | call cur_buffer.restore()
-  endtry
-endfu
 
 fu! esearch#buf#handle() abort
   return s:Handle
 endfu
 
 let s:Handle = {}
+
+fu! s:Handle.bufdo(cmd, ...) abort dict
+  let cur_buffer = esearch#buf#stay()
+  try
+    noau exe self.bufnr 'bufdo' a:cmd.(a:0 && a:1 ? '!' : '') |
+    return 1
+  catch   | call esearch#util#warn(v:exception) | return 0
+  finally | call cur_buffer.restore()
+  endtry
+endfu
 
 if g:esearch#has#bufadd && g:esearch#has#bufline_functions
   fu! s:Handle.for(bufnr) abort dict
@@ -163,7 +164,7 @@ if g:esearch#has#bufadd && g:esearch#has#bufline_functions
   endfu
 
   fu! s:Handle.write(bang) dict abort
-    return s:bufdo(self.bufnr, 'write', a:bang)
+    return self.bufdo('write', a:bang)
   endfu
 
   fu! s:Handle.open(opener, ...) dict abort
@@ -172,11 +173,11 @@ if g:esearch#has#bufadd && g:esearch#has#bufline_functions
   endfu
 
   fu! s:Handle.bdelete(...) dict abort
-    return s:bufdo(self.bufnr, 'bdelete', get(a:, 1))
+    return self.bufdo('bdelete', get(a:, 1))
   endfu
 
   fu! s:Handle.bwipeout(...) dict abort
-    return s:bufdo(self.bufnr, 'bwipeout', get(a:, 1))
+    return self.bufdo('bwipeout', get(a:, 1))
   endfu
 else
   fu! s:Handle.new(filename) abort dict
@@ -223,5 +224,5 @@ fu! s:CurrentBufferGuard.new() abort dict
 endfu
 
 fu! s:CurrentBufferGuard.restore() abort dict
-  if self.bufnr != bufnr('') | exe self.bufnr 'buffer!' | endif
+  if self.bufnr != bufnr('') | noau exe self.bufnr 'buffer!' | endif
 endfu

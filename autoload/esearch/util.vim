@@ -315,3 +315,8 @@ endfu
 fu! esearch#util#capture_range(target) abort range
   call add(a:target, [a:firstline, a:lastline])
 endfu
+
+fu! esearch#util#file_exists(path) abort
+  let [dirname, basename] = [s:Filepath.dirname(a:path), s:Filepath.basename(a:path)]
+  return !empty(globpath(dirname, basename, 1))
+endfu
